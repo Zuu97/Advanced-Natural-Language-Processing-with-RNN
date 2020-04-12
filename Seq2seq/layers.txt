@@ -1,0 +1,21 @@
+# Teacher Forcing
+<keras.engine.input_layer.InputLayer object at 0x00000202D2458B70>
+<keras.engine.input_layer.InputLayer object at 0x00000202D2269080>
+<keras.layers.embeddings.Embedding object at 0x00000202D22690F0>
+<keras.layers.embeddings.Embedding object at 0x00000202D2269198>
+<keras.layers.recurrent.LSTM object at 0x00000202D2269128>
+<keras.layers.recurrent.LSTM object at 0x00000202D2269630>
+<keras.layers.core.Dense object at 0x00000202D22697F0>
+
+# Encoder Test
+<keras.engine.input_layer.InputLayer object at 0x00000202CCE35BA8>
+<keras.layers.embeddings.Embedding object at 0x00000202D1C35748>
+<keras.layers.recurrent.LSTM object at 0x00000202D244DF28>
+
+#Decoder Test
+<keras.engine.input_layer.InputLayer object at 0x00000202D26BAE48>
+<keras.layers.embeddings.Embedding object at 0x00000202D26DC7F0>
+<keras.engine.input_layer.InputLayer object at 0x00000202D26DC7B8>
+<keras.engine.input_layer.InputLayer object at 0x00000202D26FFEF0>
+<keras.layers.recurrent.LSTM object at 0x00000202D26DC438>
+<keras.layers.core.Dense object at 0x00000204C39559E8>
