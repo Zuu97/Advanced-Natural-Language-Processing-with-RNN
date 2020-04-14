@@ -6,6 +6,7 @@ batch_size = 64
 epochs = 50
 d1 = 10
 d2 = 1
+seed = 42
 hidden_dim_encoder = 400
 hidden_dim_decoder = 400
 num_samples = 10000

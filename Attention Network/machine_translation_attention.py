@@ -3,23 +3,25 @@ import os
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 import tensorflow as tf
 from tensorflow import keras
-from keras.models import Model
-from keras.layers import Dense, Embedding, LSTM, Input, Bidirectional, RepeatVector, Concatenate, Activation, Dot, Lambda
-from keras.preprocessing.text import Tokenizer
-from keras.preprocessing.sequence import pad_sequences
-from keras.optimizers import Adam
-from keras.utils import to_categorical
-from keras.models import model_from_json
+from tensorflow.keras.models import Model
+from tensorflow.keras.layers import Dense, Embedding, LSTM, Input, Bidirectional, RepeatVector, Concatenate, Activation, Dot, Lambda, Dropout
+from tensorflow.keras.preprocessing.text import Tokenizer
+from tensorflow.keras.preprocessing.sequence import pad_sequences
+from tensorflow.keras.optimizers import Adam
+from tensorflow.keras.utils import to_categorical
+from tensorflow.keras.models import model_from_json
 from variables import*
 from util import machine_translation_data
-from keras.models import model_from_json
-
+from keras.utils.generic_utils import get_custom_objects
 import logging
 logging.getLogger('tensorflow').disabled = True
 
 import keras.backend as K
 if len(K.tensorflow_backend._get_available_gpus()) > 0:
-  from keras.layers import CuDNNLSTM as LSTM
+  from tensorflow.compat.v1.keras.layers import CuDNNLSTM as LSTM
+
+np.random.seed(seed)
+tf.compat.v1.set_random_seed(seed)
 
 class Attention(object):
     def __init__(self):
@@ -95,11 +97,11 @@ class Attention(object):
         encoder_output = Bidirectional(
                             LSTM(
                                hidden_dim_encoder,
-                               return_sequences=True,
+                               return_sequences=True
                                 ),
                             name='bidirectional_lstm_encoder'
                             )(embedding_encoder)
-
+        encoder_output = Dropout(0.5)(encoder_output)
         # make decoder but before that need to build attention so only specify embedding layer
         decoder_inputs = Input(
                             shape=(self.max_length_decoder,),
@@ -167,6 +169,7 @@ class Attention(object):
 
             decoder_lstm_input = context_concat_layer([context, Xt]) # shape (N, 2M1+Tx)
             out, s, c = decoder_lstm_layer(context, initial_state=[s, c])
+            out = Dropout(0.5)(out)
             decoder_output = decoder_dense_layer(out) # shape (N, V)
             outputs.append(decoder_output) # shape(Ty, N, V)
 
@@ -238,7 +241,7 @@ class Attention(object):
         json_file = open(attention_model_path, 'r')
         loaded_model_json = json_file.read()
         json_file.close()
-        loaded_model = model_from_json(loaded_model_json)
+        loaded_model = model_from_json(loaded_model_json, custom_objects={'softmax_over_time': Attention.softmax_over_time})
         loaded_model.load_weights(attention_model_weights)
         self.attention_network = loaded_model
 
@@ -258,10 +261,11 @@ class Attention(object):
         encoder_output = Bidirectional(
                             LSTM(
                                hidden_dim_encoder,
-                               return_sequences=True,
+                               return_sequences=True
                                 ),
                                 name='bidirectional_lstm_encoder'
                             )(embedding_encoder)
+        encoder_output = Dropout(0.5)(encoder_output)
         self.encoder = Model(encoder_inputs, encoder_output)
 
         self.encoder.get_layer(name='encoder_embedding').set_weights(
@@ -322,6 +326,7 @@ class Attention(object):
         context = attention_step_func(decoder_inputs_h, s0)
         decoder_lstm_input = context_concat_layer([context, embedding_decoder_single])
         out, s, c = decoder_lstm_layer(context, initial_state=[s0, c0])
+        out = Dropout(0.5)(out)
         decoder_output = decoder_dense_layer(out)
 
         self.decoder = Model(
@@ -357,10 +362,6 @@ class Attention(object):
         self.decoder.get_layer(name='decoder_dense').set_weights(
                                         self.attention_network.get_layer(name='decoder_dense').get_weights()
                                         )
-
-        # self.decoder.get_layer(name='contex_concat').set_weights(
-        #                                 self.attention_network.get_layer(name='contex_concat').get_weights()
-        #                                 )
 
 
     def translate_line(self, input_seq, index2word_decoder):
@@ -407,7 +408,8 @@ if __name__ == "__main__":
     model = Attention()
     model.tokenize_encoder()
     model.tokenize_decoder()
-    # if not os.path.exists(attention_model_path) or not os.path.exists(attention_model_weights):
-    model.train_model()
-    # model.load_model()
+    get_custom_objects().update({'softmax_over_time': Activation(Attention.softmax_over_time)})
+    if not os.path.exists(attention_model_path) or not os.path.exists(attention_model_weights):
+        model.train_model()
+    model.load_model()
     model.language_translation()
