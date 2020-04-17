@@ -168,7 +168,7 @@ class Attention(object):
             Xt = seq_layer(embedding_decoder) # shape (N, Tx)
 
             decoder_lstm_input = context_concat_layer([context, Xt]) # shape (N, 2M1+Tx)
-            out, s, c = decoder_lstm_layer(context, initial_state=[s, c])
+            out, s, c = decoder_lstm_layer(decoder_lstm_input, initial_state=[s, c])
             out = Dropout(0.5)(out)
             decoder_output = decoder_dense_layer(out) # shape (N, V)
             outputs.append(decoder_output) # shape(Ty, N, V)
@@ -325,7 +325,7 @@ class Attention(object):
 
         context = attention_step_func(decoder_inputs_h, s0)
         decoder_lstm_input = context_concat_layer([context, embedding_decoder_single])
-        out, s, c = decoder_lstm_layer(context, initial_state=[s0, c0])
+        out, s, c = decoder_lstm_layer(decoder_lstm_input, initial_state=[s0, c0])
         out = Dropout(0.5)(out)
         decoder_output = decoder_dense_layer(out)
 
